@@ -24,7 +24,11 @@ use IEEE.STD_LOGIC_1164.ALL;
 
 -- Define a type to be used in the entity
 package array_type is
-type integer_array is array(7 downto 0) of std_logic_vector(7 downto 0);
+constant N: positive := 2;
+type positive_array is array(N downto 0) of positive range 0 to 100;
+type std_logic_vectory_array is array(N downto 0) of std_logic_vector(17 downto 0);
+type std_logic_vectory_array2 is array(N downto 0) of std_logic_vector(24 downto 0);
+type std_logic_vectory_array3 is array(N downto 0) of std_logic_vector(25 downto 0);
 end package array_type;
 
 library IEEE;
@@ -43,49 +47,25 @@ use work.array_type.all;
 
 
 entity neuron is
-    Port ( clk : in STD_LOGIC;
-           inputs : in integer_array;
-           output : out std_logic_vector(25 downto 0));
+    Generic 
+    (
+        INPUT_COUNT : integer := 2
+    );
+    Port 
+    ( 
+        clk : in STD_LOGIC;
+        inputs : in positive_array;
+        output : out positive range 0 to 20000
+    );
 end neuron;
 
 architecture Behavioral of neuron is
 -- Constants
---constant w1 : positive := 80;
---constant w2 : positive := 70;
---constant w3 : positive := 20;
---constant w4 : positive := 10;
---constant w5 : positive := 40;
---constant w6 : positive := 90;
---constant w7 : positive := 50;
---constant w8 : positive := 20;
 
 -- Signals
-signal extended_input1 : std_logic_vector(17 downto 0);
-signal extended_input2 : std_logic_vector(17 downto 0);
-signal extended_input3 : std_logic_vector(17 downto 0);
-signal extended_input4 : std_logic_vector(17 downto 0);
-signal extended_input5 : std_logic_vector(17 downto 0);
-signal extended_input6 : std_logic_vector(17 downto 0);
-signal extended_input7 : std_logic_vector(17 downto 0);
-signal extended_input8 : std_logic_vector(17 downto 0);
-
-
-signal weighted_input1 : std_logic_vector(24 downto 0);
-signal weighted_input2 : std_logic_vector(24 downto 0);
-signal weighted_input3 : std_logic_vector(24 downto 0);
-signal weighted_input4 : std_logic_vector(24 downto 0);
-signal weighted_input5 : std_logic_vector(24 downto 0);
-signal weighted_input6 : std_logic_vector(24 downto 0);
-signal weighted_input7 : std_logic_vector(24 downto 0);
-signal weighted_input8 : std_logic_vector(24 downto 0);
-
-signal weighted_output1 : std_logic_vector(25 downto 0);
-signal weighted_output2 : std_logic_vector(25 downto 0);
-signal weighted_output3 : std_logic_vector(25 downto 0);
-signal weighted_output4 : std_logic_vector(25 downto 0);
-signal weighted_output5 : std_logic_vector(25 downto 0);
-signal weighted_output6 : std_logic_vector(25 downto 0);
-signal weighted_output7 : std_logic_vector(25 downto 0);
+signal extended_inputs : std_logic_vectory_array;
+signal weighted_inputs : std_logic_vectory_array2;
+signal weighted_outputs : std_logic_vectory_array3;
 
 -- Components
 COMPONENT mult_gen_0 IS -- Applies weight constant of 80.
@@ -98,91 +78,28 @@ END COMPONENT;
 
 begin
 
-extended_input1 <= "0000000000"&inputs(0);
-extended_input2 <= "0000000000"&inputs(1);
-extended_input3 <= "0000000000"&inputs(2);
-extended_input4 <= "0000000000"&inputs(3);
-extended_input5 <= "0000000000"&inputs(4);
-extended_input6 <= "0000000000"&inputs(5);
-extended_input7 <= "0000000000"&inputs(6);
-extended_input8 <= "0000000000"&inputs(7);
+INPUT_EXTEND_GEN : for i in 0 to (N - 1) generate
+    extended_inputs(i) <= std_logic_vector(to_unsigned(inputs(i),extended_inputs(i)'length));
+end generate;
 
-u1 :  mult_gen_0
-port map
-(
-    CLK => clk,
-    A => extended_input1,
-    P => weighted_input1
-);
-
-u2 :  mult_gen_0
-port map
-(
-    CLK => clk,
-    A => extended_input2,
-    P => weighted_input2
-);
-
-u3 :  mult_gen_0
-port map
-(
-    CLK => clk,
-    A => extended_input3,
-    P => weighted_input3
-);
-
-u4 :  mult_gen_0
-port map
-(
-    CLK => clk,
-    A => extended_input4,
-    P => weighted_input4
-);
-
-u5 :  mult_gen_0
-port map
-(
-    CLK => clk,
-    A => extended_input5,
-    P => weighted_input5
-);
-
-u6 :  mult_gen_0
-port map
-(
-    CLK => clk,
-    A => extended_input6,
-    P => weighted_input6
-);
-
-u7 :  mult_gen_0
-port map
-(
-    CLK => clk,
-    A => extended_input7,
-    P => weighted_input7
-);
-
-u8 :  mult_gen_0
-port map
-(
-    CLK => clk,
-    A => extended_input8,
-    P => weighted_input8
-);
+MULT_GEN : for i in 0 to (N - 1) generate
+    MULTIPLIER : mult_gen_0
+    port map
+    (
+        CLK => clk,
+        A => extended_inputs(i),
+        P => weighted_inputs(i)
+    );
+end generate;
 
 process (clk)
+    variable v_weighted_output : positive range 0 to 20000;
 begin
     if rising_edge(clk) then
-        weighted_output1 <= '0'&std_logic_vector(unsigned(weighted_input1) + unsigned(weighted_input2));
-        weighted_output2 <= '0'&std_logic_vector(unsigned(weighted_input3) + unsigned(weighted_input4));
-        weighted_output3 <= '0'&std_logic_vector(unsigned(weighted_input5) + unsigned(weighted_input6));
-        weighted_output4 <= '0'&std_logic_vector(unsigned(weighted_input7) + unsigned(weighted_input8));
-
-        weighted_output5 <= std_logic_vector(unsigned(weighted_output1) + unsigned(weighted_output2));
-        weighted_output6 <= std_logic_vector(unsigned(weighted_output3) + unsigned(weighted_output4));
-
-        output <= std_logic_vector(unsigned(weighted_output5) + unsigned(weighted_output6));
+        l_acc : for ii in 0 to (N - 1) loop
+            v_weighted_output := v_weighted_output + positive(to_integer(unsigned(weighted_inputs(ii))));
+        end loop; -- ii
+        output <= v_weighted_output;
     end if;
 end process;
 
